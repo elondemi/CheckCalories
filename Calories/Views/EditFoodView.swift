@@ -2,7 +2,7 @@ import SwiftUI
 
 struct EditFoodView: View {
     @Environment(\.managedObjectContext) var managedObjContext
-    @Environment(\.dismiss) var dismiss
+    @Environment(\.presentationMode) var presentationMode
     
     var food: FetchedResults<Food>.Element
     
@@ -11,7 +11,7 @@ struct EditFoodView: View {
     
     var body: some View {
         Form {
-            Section() {
+            Section {
                 TextField("\(food.name!)", text: $name)
                     .onAppear {
                         name = food.name!
@@ -27,7 +27,7 @@ struct EditFoodView: View {
                     Spacer()
                     Button("Submit") {
                         DataController().editFood(food: food, name: name, calories: calories, context: managedObjContext)
-                        dismiss()
+                        presentationMode.wrappedValue.dismiss()
                     }
                     Spacer()
                 }

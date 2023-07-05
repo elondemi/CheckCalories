@@ -1,16 +1,79 @@
-//
-//  ContentView.swift
-//  Calories
-//
-//  Created by taulant on 2023-07-04.
-//
-
 import SwiftUI
+import CoreData
 
 struct ContentView: View {
+    @Environment(\.managedObjectContext) var managedObjContext
+    @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \Food.date, ascending: false)]) var food: FetchedResults<Food>
+    
+    @State private var showingAddView = false
+    
     var body: some View {
-        Text("Hello, world!")
-            .padding()
+        NavigationView {
+            VStack(alignment: .leading) {
+                Text("\(Int(totalCaloriesToday())) KCal (Today)")
+                    .foregroundColor(.gray)
+                    .padding([.horizontal])
+                List {
+                    ForEach(food) { food in
+                        NavigationLink(destination: EditFoodView(food: food)) {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 6) {
+                                    Text(food.name ?? "")
+                                        .bold()
+        
+                                    Text("\(Int(food.calories))") + Text(" calories").foregroundColor(.red)
+                                }
+                                Spacer()
+                                Text(calcTimeSince(date: food.date!))
+                                    .foregroundColor(.gray)
+                                    .italic()
+                            }
+                        }
+                    }
+                    .onDelete(perform: deleteFood)
+                }
+            }
+            .navigationTitle("iCalories")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        showingAddView.toggle()
+                    } label: {
+                        Label("Add food", systemImage: "plus.circle")
+                    }
+                }
+                ToolbarItem(placement: .navigationBarLeading) {
+                    EditButton()
+                }
+            }
+            .sheet(isPresented: $showingAddView) {
+                AddFoodView()
+            }
+        }
+        .navigationViewStyle(StackNavigationViewStyle()) // Explicitly specify the navigationViewStyle
+    }
+    
+    // Deletes food at the current offset
+    private func deleteFood(offsets: IndexSet) {
+        withAnimation {
+            offsets.map { food[$0] }
+            .forEach(managedObjContext.delete)
+            
+            // Saves to our database
+            DataController().save(context: managedObjContext)
+        }
+    }
+    
+    // Calculates the total calories consumed today
+    private func totalCaloriesToday() -> Double {
+        var caloriesToday: Double = 0
+        for item in food {
+            if Calendar.current.isDateInToday(item.date ?? Date()) {
+                caloriesToday += item.calories
+            }
+        }
+        print("Calories today: \(caloriesToday)")
+        return caloriesToday
     }
 }
 

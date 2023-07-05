@@ -19,8 +19,7 @@ class DataController: ObservableObject {
             print("Data saved successfully. WUHU!!!")
         } catch {
             // Handle errors in our database
-            let nsError = error as NSError
-            fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
+           print("We could not save the data...")
         }
     }
     
